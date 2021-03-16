@@ -25,8 +25,13 @@ public class SafariViewController: SFSafariViewController, FlutterPlugin, SFSafa
     }
     
     public func prepareMethodChannel() {
-        channel = FlutterMethodChannel(name: "com.pichillilorenzo/flutter_chromesafaribrowser_" + id, binaryMessenger: SwiftFlutterPlugin.instance!.registrar!.messenger())
-        SwiftFlutterPlugin.instance!.registrar!.addMethodCallDelegate(self, channel: channel!)
+        guard let registrar = SwiftFlutterPlugin.instance?.registrar else {
+            return
+        }
+        
+        let channel = FlutterMethodChannel(name: "com.pichillilorenzo/flutter_chromesafaribrowser_" + id, binaryMessenger: registrar.messenger())
+        self.channel = channel
+        registrar.addMethodCallDelegate(self, channel: channel)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -117,37 +122,39 @@ public class SafariViewController: SFSafariViewController, FlutterPlugin, SFSafa
 //        return []
 //    }
 //
-//    public func safariViewController(_ controller: SFSafariViewController, initialLoadDidRedirectTo URL: URL) {
-//        print("initialLoadDidRedirectTo")
-//        print(URL)
-//    }
+    public func safariViewController(_ controller: SFSafariViewController, initialLoadDidRedirectTo url: URL) {
+        let arguments: [String: Any?] = [
+            "url": url.absoluteString
+        ]
+        channel?.invokeMethod("onChromeSafariRedirectedTo", arguments: arguments)
+    }
     
     public func onChromeSafariBrowserOpened() {
-        channel!.invokeMethod("onChromeSafariBrowserOpened", arguments: [])
+        channel?.invokeMethod("onChromeSafariBrowserOpened", arguments: [])
     }
     
     public func onChromeSafariBrowserCompletedInitialLoad() {
-        channel!.invokeMethod("onChromeSafariBrowserCompletedInitialLoad", arguments: [])
+        channel?.invokeMethod("onChromeSafariBrowserCompletedInitialLoad", arguments: [])
     }
     
     public func onChromeSafariBrowserClosed() {
-        channel!.invokeMethod("onChromeSafariBrowserClosed", arguments: [])
+        channel?.invokeMethod("onChromeSafariBrowserClosed", arguments: [])
     }
     
     public func dispose() {
         delegate = nil
-        channel!.setMethodCallHandler(nil)
+        channel?.setMethodCallHandler(nil)
     }
 }
 
-class CustomUIActivity : UIActivity {
-    var viewId: String
-    var id: Int64
-    var url: URL
-    var title: String?
-    var type: UIActivity.ActivityType?
-    var label: String?
-    var image: UIImage?
+final class CustomUIActivity : UIActivity {
+    let viewId: String
+    let id: Int64
+    let url: URL
+    let title: String?
+    let type: UIActivity.ActivityType?
+    let label: String?
+    let image: UIImage?
     
     init(viewId: String, id: Int64, url: URL, title: String?, label: String?, type: UIActivity.ActivityType?, image: UIImage?) {
         self.viewId = viewId
@@ -180,7 +187,10 @@ class CustomUIActivity : UIActivity {
     }
 
     override func perform() {
-        let channel = FlutterMethodChannel(name: "com.pichillilorenzo/flutter_chromesafaribrowser_" + viewId, binaryMessenger: SwiftFlutterPlugin.instance!.registrar!.messenger())
+        guard let binaryMessenger = SwiftFlutterPlugin.instance?.registrar?.messenger() else {
+            return
+        }
+        let channel = FlutterMethodChannel(name: "com.pichillilorenzo/flutter_chromesafaribrowser_" + viewId, binaryMessenger: binaryMessenger)
         
         let arguments: [String: Any?] = [
             "url": url.absoluteString,
