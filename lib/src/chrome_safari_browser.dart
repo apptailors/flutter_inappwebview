@@ -48,6 +48,9 @@ class ChromeSafariBrowser {
         int id = call.arguments["id"].toInt();
         this._menuItems[id].action(url, title);
         break;
+      case "onChromeSafariRedirectedTo":
+        String url = call.arguments["url"];
+        onChromeSafariRedirectedTo(url);
       default:
         throw UnimplementedError("Unimplemented ${call.method} method");
     }
@@ -116,6 +119,9 @@ class ChromeSafariBrowser {
     Map<String, dynamic> args = <String, dynamic>{};
     return await _sharedChannel.invokeMethod("isAvailable", args);
   }
+
+  ///Event fires when the [ChromeSafariBrowser] is redirected to given [Uri].
+  void onChromeSafariRedirectedTo(String uri) {}
 
   ///Event fires when the [ChromeSafariBrowser] is opened.
   void onOpened() {}
