@@ -51,6 +51,7 @@ class ChromeSafariBrowser {
       case "onChromeSafariRedirectedTo":
         String url = call.arguments["url"];
         onChromeSafariRedirectedTo(url);
+        break;
       default:
         throw UnimplementedError("Unimplemented ${call.method} method");
     }
